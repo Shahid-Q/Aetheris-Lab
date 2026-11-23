@@ -1,0 +1,208 @@
+.admin-shell {
+  min-height: 100dvh;
+}
+
+.admin-header {
+  min-height: 72px;
+  padding: 12px clamp(16px, 4vw, 54px);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.admin-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.125rem;
+  white-space: nowrap;
+}
+
+.admin-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-account {
+  max-inline-size: 240px;
+  padding-inline: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+#main.admin-main {
+  inline-size: min(1220px, calc(100% - clamp(24px, 6vw, 48px)));
+  margin-block: clamp(16px, 2.5vw, 32px) 24px;
+  margin-inline: auto;
+  padding-block-end: 24px;
+}
+
+.admin-login {
+  width: min(460px, calc(100% - 32px));
+  margin: clamp(28px, 8vw, 112px) auto 0;
+  display: grid;
+  gap: 16px;
+}
+
+.admin-login > :last-child {
+  margin-block-start: 4px;
+}
+
+.admin-session-error {
+  margin: 20px clamp(16px, 4vw, 48px) 0;
+}
+
+@media (max-width: 540px) {
+  .admin-shell .page {
+    padding-inline: 16px;
+  }
+
+  .admin-account {
+    max-inline-size: 160px;
+  }
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-block-end: 12px;
+}
+
+.admin-toolbar .MuiTextField-root {
+  flex: 1 1 220px;
+}
+
+.admin-request-controls:not(:empty) {
+  margin-block-end: 12px;
+}
+
+.admin-request-controls > p {
+  margin-block: 0 8px;
+  color: var(--muted);
+}
+
+.admin-queue-entry {
+  display: flex;
+  align-items: center;
+}
+
+.admin-queue-entry .request-row {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.admin-review-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(16px, 2vw, 24px);
+}
+
+.admin-review-cards > .request-metadata {
+  margin-block: 0;
+}
+
+.admin-section,
+.admin-form {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.admin-section :is(h2, h3, p) {
+  margin-block: 0 6px;
+  overflow-wrap: anywhere;
+}
+
+.admin-section p[dir="auto"] {
+  white-space: pre-wrap;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.admin-fields {
+  margin: 0;
+}
+
+.admin-fields > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 8px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+
+.admin-fields dt {
+  color: var(--muted);
+}
+
+.admin-fields dd {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.admin-photo {
+  margin: 0;
+}
+
+.admin-photo img {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--soft);
+}
+
+.admin-evidence {
+  margin-block-start: 10px;
+  padding: 14px;
+  background: var(--soft);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+
+.admin-evidence p {
+  margin-block: 6px;
+}
+
+.admin-choices {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-choices .MuiFormControlLabel-root {
+  margin-inline: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-history {
+  margin: 0;
+  padding-inline-start: 24px;
+  overflow-wrap: anywhere;
+}
+
+.admin-history li + li {
+  margin-block-start: 8px;
+}
+
+@media (max-width: 640px) {
+  .admin-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

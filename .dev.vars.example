@@ -1,0 +1,18 @@
+# Worker environment. Copy to .dev.vars for local development.
+# Enable the scheduled evidence checks for this environment.
+AGENT_ENABLED=false
+
+# Optional provider. A missing key leaves evidence collection available without AI output.
+AI_PROVIDER=
+AI_MODEL=
+AGENT_API_KEY=
+AGENT_SYSTEM_PROMPT=
+
+# Optional browser access to the public Worker API from exact origins (comma separated).
+PUBLIC_ORIGINS=
+
+# Reviewer authentication. Set the origin and the same proxy secret in admin Pages Functions.
+ADMIN_ORIGIN=
+ADMIN_PROXY_SECRET=
+# Worker only. Choose a separate local password; never commit .dev.vars. See docs/cloudflare.md.
+ADMIN_PASSWORD=

@@ -1,0 +1,12 @@
+PRAGMA foreign_keys = ON;
+CREATE TABLE users (id TEXT PRIMARY KEY, created_at TEXT NOT NULL);
+CREATE TABLE chemicals (id TEXT PRIMARY KEY, name TEXT NOT NULL, formula TEXT, cas TEXT, record_json TEXT NOT NULL, source_url TEXT NOT NULL, verified_at TEXT NOT NULL);
+CREATE INDEX chemicals_cas ON chemicals(cas);
+CREATE TABLE requests (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES users(id), input_json TEXT NOT NULL, assessment_version INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL CHECK(status IN ('Draft','Submitted','Identifying Chemicals','Analyzing','Awaiting Administrator Review','Additional Information Required','Approved','Rejected','Unable to Determine','Failed')), created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX requests_owner_created ON requests(owner_id, created_at);
+CREATE TABLE assessments (request_id TEXT NOT NULL REFERENCES requests(id), version INTEGER NOT NULL, private_json TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(request_id,version));
+CREATE TABLE reviews (event_id TEXT PRIMARY KEY, request_id TEXT NOT NULL, assessment_version INTEGER NOT NULL, reviewer_id TEXT NOT NULL, decision TEXT NOT NULL CHECK(decision IN ('approved','rejected','additional_information_required','unable_to_determine')), reason TEXT NOT NULL, approved_result_json TEXT, reviewed_at TEXT NOT NULL, received_at TEXT NOT NULL, revoked_at TEXT, FOREIGN KEY(request_id,assessment_version) REFERENCES assessments(request_id,version), CHECK(decision != 'approved' OR approved_result_json IS NOT NULL));
+CREATE TABLE request_events (id INTEGER PRIMARY KEY AUTOINCREMENT, request_id TEXT NOT NULL REFERENCES requests(id), status TEXT NOT NULL, actor_id TEXT NOT NULL, metadata_json TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TRIGGER immutable_events_update BEFORE UPDATE ON request_events BEGIN SELECT RAISE(ABORT,'Audit events are append-only'); END;
+CREATE TRIGGER immutable_events_delete BEFORE DELETE ON request_events BEGIN SELECT RAISE(ABORT,'Audit events are append-only'); END;
+CREATE TABLE image_objects (id TEXT PRIMARY KEY, request_id TEXT NOT NULL REFERENCES requests(id), owner_id TEXT NOT NULL REFERENCES users(id), r2_key TEXT NOT NULL UNIQUE, mime_type TEXT NOT NULL, size_bytes INTEGER NOT NULL CHECK(size_bytes BETWEEN 1 AND 10485760), created_at TEXT NOT NULL);
