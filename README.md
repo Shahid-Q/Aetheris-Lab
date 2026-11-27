@@ -6,7 +6,15 @@
 
 **Live Deployment:** [https://aetheris-lab-api.shahid-dev-273.workers.dev](https://aetheris-lab-api.shahid-dev-273.workers.dev)
 
-A React + TypeScript scientific workspace for documenting two solutions and preparing chemical compatibility questions for independent expert review. The public Pages application submits requests and displays token-protected progress and expert-approved assessments. A separate admin Pages application provides the bilingual reviewer workspace. Both call the same Cloudflare Worker
+A bilingual React + TypeScript scientific workspace for documenting two solutions and preparing chemical compatibility questions for independent expert review. The public Pages application submits requests and displays token-protected progress and expert-approved assessments, while a separate admin Pages application provides the reviewer workspace. Both call the same Cloudflare Worker backed by D1 and R2
+
+## Screenshots
+
+* **Home:** ![Home Interface](docs/images/home.png)
+* **Chemical Analysis:** ![Chemical Analysis Interface](docs/images/Chemical_Analysis.png)
+* **Chemical Library:** ![Chemical Library Interface](docs/images/Chemical_Library.png)
+* **My Requests:** ![My Requests Interface](docs/images/My_Requests.png)
+* **About Aetheris Lab:** ![About Aetheris Lab Interface](docs/images/About_Aetheris_Lab.png)
 
 ## Run locally
 
