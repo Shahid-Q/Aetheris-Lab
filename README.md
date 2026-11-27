@@ -4,6 +4,9 @@ A React + TypeScript scientific workspace for documenting two solutions and prep
 
 ## Run locally
 
+# Aetheris Lab
+
+**Live Deployment:** https://aetheris-lab-api.shahid-dev-273.workers.dev
 Requirements: Node 22.12+ (Node 26 used for validation) and npm.
 The Worker tests use Node's built-in SQLite module. On Node 22.12, enable it with `NODE_OPTIONS=--experimental-sqlite` or run the checks with Node 26, as CI does.
 
