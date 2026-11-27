@@ -8,6 +8,7 @@
 
 A bilingual React + TypeScript scientific workspace for documenting two solutions and preparing chemical compatibility questions for independent expert review. The public Pages application submits requests and displays token-protected progress and expert-approved assessments, while a separate admin Pages application provides the reviewer workspace. Both call the same Cloudflare Worker backed by D1 and R2
 
+
 ## Screenshots
 
 - **Home:** ![Home Interface](docs/images/home.png)
