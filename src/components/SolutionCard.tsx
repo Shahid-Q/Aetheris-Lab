@@ -501,9 +501,11 @@ function Camera({
               {t("retake")}
             </button>
             <button
+              type="button"
               className="button primary"
               onClick={() => {
                 onCapture(preview.file);
+                onClose();
               }}
             >
               {t("confirm")}

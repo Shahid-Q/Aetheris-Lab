@@ -40,7 +40,7 @@ async function health(env: Env) {
       ).all();
       ready = true;
     } catch {
-      // Report readiness without exposing database details.
+
     }
   }
   const enabled = ready && env.AGENT_ENABLED === "true";
@@ -161,11 +161,17 @@ async function reviewApi(request: Request, env: Env, pathname: string) {
   return admin(request, env, reviewerId);
 }
 
+function isLocalDevOrigin(url: URL): boolean {
+  return url.protocol === "http:" && (url.hostname === "localhost" || url.hostname === "127.0.0.1");
+}
+
 function allowedPublicOrigin(origin: string, env: Env) {
-  if (!env.PUBLIC_ORIGINS?.split(",").map((value) => value.trim()).includes(origin)) return false;
+  const configured = env.PUBLIC_ORIGINS?.split(",").map((value) => value.trim()).filter(Boolean) ?? [];
   try {
     const url = new URL(origin);
-    return url.protocol === "https:" && url.origin === origin;
+    if (url.origin !== origin) return false;
+    if (isLocalDevOrigin(url)) return true;
+    return url.protocol === "https:" && configured.includes(origin);
   } catch {
     return false;
   }
@@ -238,9 +244,7 @@ function secureResponse(response: Response): Response {
   });
 }
 
-
 export default {
-
   async fetch(request: Request, env: Env): Promise<Response> {
     const { pathname } = new URL(request.url);
 
@@ -268,12 +272,10 @@ export default {
     return secureResponse(response);
   },
 
-
   async scheduled(_controller: ScheduledController, env: Env) {
     await Promise.allSettled([
       processNextRequest(env),
       deleteQueuedImages(env.DB, env.IMAGES),
     ]);
   },
-
 };

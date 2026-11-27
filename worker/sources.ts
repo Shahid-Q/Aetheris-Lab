@@ -49,7 +49,7 @@ async function compounds(namespace: "name" | "fastformula", identifier: string) 
   const query = namespace === "fastformula" ? "?MaxRecords=3" : "";
   const data = await retrieve(
     pubchem + "/rest/pug/compound/" + namespace + "/" + encodeURIComponent(identifier)
-      + "/property/Title,MolecularFormula/JSON" + query, 128 * 1024,
+    + "/property/Title,MolecularFormula/JSON" + query, 128 * 1024,
   );
   if (!data) return [];
   return z.object({ PropertyTable: z.object({ Properties: z.array(compoundSchema) }) })
@@ -152,9 +152,14 @@ function htmlText(html: string) {
 function indexEntries(html: string) {
   const items = new Map<string, { title: string; page: string }[]>();
   const rows = /<tr>\s*<td>\s*([^<]{1,200})<\/td>\s*<td>\s*<a\s+href=['"](npgd\d{4}\.html)['"]\s*>([\s\S]{1,600}?)<\/a>\s*<\/td>\s*<\/tr>/gi;
+  let count = 0;
   for (const [, key, page, title] of html.matchAll(rows)) {
+    if (++count > 5000) break;
     const normalized = htmlText(key).toLowerCase();
-    items.set(normalized, [...(items.get(normalized) ?? []), { title: htmlText(title), page }]);
+    const existing = items.get(normalized);
+    const entry = { title: htmlText(title), page };
+    if (existing) existing.push(entry);
+    else items.set(normalized, [entry]);
   }
   if (!items.size) throw new Error("NIOSH_INDEX_FORMAT_CHANGED");
   return items;

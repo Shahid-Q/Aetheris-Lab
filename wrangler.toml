@@ -9,15 +9,21 @@ ADMIN_ORIGIN = "https://aetheris-admin.pages.dev"
 
 [triggers]
 crons = ["* * * * *"]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "aetheris-lab-db"
-database_id = "81233c23-e705-42c4-add1-94a7727bc41f"
+database_id = "3118d17b-340c-4fd0-8877-7bcd67983aa6"
 migrations_dir = "migrations"
 
-[[r2_buckets]]
-binding = "IMAGES"
-bucket_name = "aetheris-lab-private-images"
+
+# [[r2_buckets]]
+# binding = "IMAGES"
+# bucket_name = "aetheris-lab-private-images"
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
 
 [[ratelimits]]
 name = "SUBMISSION_LIMIT"

@@ -30,7 +30,11 @@ async function finish(
     `UPDATE public_agent_runs SET status = ?, finished_at = ?, failure_code = ?
      WHERE id = ? AND status = 'running' AND lease_until > ?`,
   ).bind(status, timestamp, failure, runId, timestamp));
-  await db.batch(batch);
+  try {
+    await db.batch(batch);
+  } catch {
+    // Avoid unhandled batch errors if lease expired concurrently or DB is temporarily busy
+  }
 }
 
 export async function processNextRequest(env: AgentEnv) {
@@ -66,8 +70,7 @@ export async function processNextRequest(env: AgentEnv) {
     const input = publicInputSchema.parse(JSON.parse(request?.input_json ?? "null"));
     const collect = scientificSources();
     const results = await Promise.all([collect(input.a, "A"), collect(input.b, "B")]);
-    evidence = results.flatMap((result) => result.evidence);
-    report = {
+    evidence = results.flatMap((result) => result.evidence).slice(0, 50); report = {
       identities: results.map((result) => result.identity),
       gaps: results.flatMap((result) => result.gaps),
       assessment: null,

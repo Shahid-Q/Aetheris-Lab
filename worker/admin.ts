@@ -49,6 +49,24 @@ async function manage(request: Request, env: Env, reviewer: string) {
   const parsed = adminManageSchema.safeParse(input);
   if (!parsed.success) return error("INVALID_REQUEST", 400);
   const { action, ids } = parsed.data;
+  const serializedIds = JSON.stringify(ids);
+  const now = new Date().toISOString();
+
+  if (action === "delete") {
+    try {
+      const { results } = await env.DB.prepare(
+        `INSERT INTO public_request_management_events (request_id, action, actor, created_at)
+         SELECT id, 'delete', ?, ? FROM public_requests
+         WHERE id IN (SELECT DISTINCT value FROM json_each(?))
+         RETURNING request_id AS id`,
+      ).bind(reviewer, now, serializedIds)
+        .all<{ id: string }>();
+      return json({ changed: results.length });
+    } catch {
+      return error("SERVICE_UNAVAILABLE", 503);
+    }
+  }
+
   const { results } = await env.DB.prepare(
     `INSERT INTO public_request_management_events (request_id, action, actor, created_at)
      SELECT request_id, ?, ?, ? FROM public_request_workflow
@@ -56,10 +74,10 @@ async function manage(request: Request, env: Env, reviewer: string) {
        AND CASE ?
          WHEN 'archive' THEN archived_at IS NULL
          WHEN 'restore' THEN archived_at IS NOT NULL
-         ELSE 1
+         ELSE 0
        END
      RETURNING request_id AS id`,
-  ).bind(action, reviewer, new Date().toISOString(), JSON.stringify(ids), action)
+  ).bind(action, reviewer, now, serializedIds, action)
     .all<{ id: string }>();
   return json({ changed: results.length });
 }
@@ -103,6 +121,7 @@ async function detail(env: Env, id: string) {
     run: row.runId ? {
       id: row.runId, status: row.runStatus, failureCode: row.failureCode, provider: row.provider, model: row.model,
     } : null,
+
     report: row.reportJson ? JSON.parse(row.reportJson) as PreliminaryReport : null,
     evidence: evidenceRows.results as Evidence[],
     review: row.decision ? {
@@ -137,6 +156,17 @@ async function decide(request: Request, env: Env, requestId: string, reviewer: s
     if (authored.classification === "Compatible under documented conditions" && !externalSources.length) {
       return error("MIXTURE_EVIDENCE_REQUIRED", 400);
     }
+    if (
+      externalSources.some((source) => {
+        try {
+          return new URL(source.url).protocol !== "https:";
+        } catch {
+          return true;
+        }
+      })
+    ) {
+      return error("INVALID_REVIEW", 400);
+    }
     const sources = [...new Map(
       [...selected.filter((source) => source !== undefined), ...externalSources].map((source) => [source.url, source]),
     ).values()];
@@ -146,7 +176,7 @@ async function decide(request: Request, env: Env, requestId: string, reviewer: s
     if (!validated.success) return error("INVALID_REVIEW", 400);
     approvedResult = JSON.stringify(validated.data);
   }
-  // A single guarded write inserts the review, changes status, and appends history via triggers.
+
   const written = await env.DB.prepare(
     `INSERT INTO public_review_decisions (id, request_id, run_id, reviewer_id, decision, notes, approved_result_json, created_at)
      SELECT ?, request_id, run_id, ?, ?, ?, ?, ? FROM public_request_workflow

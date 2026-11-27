@@ -1,12 +1,8 @@
 export function json(data: unknown, status = 200, extraHeaders?: Record<string, string>) {
-  return Response.json(data, {
-    status,
-    headers: {
-      "Cache-Control": "no-store",
-      "X-Content-Type-Options": "nosniff",
-      ...extraHeaders,
-    },
-  });
+  const headers = new Headers(extraHeaders);
+  headers.set("Cache-Control", "no-store");
+  headers.set("X-Content-Type-Options", "nosniff");
+  return Response.json(data, { status, headers });
 }
 
 export function error(code: string, status: number, headers?: Record<string, string>) {
@@ -16,20 +12,25 @@ export function error(code: string, status: number, headers?: Record<string, str
 export async function readBytes(request: Request | Response, limit: number) {
   const length = request.headers.get("Content-Length");
   if (length !== null) {
-    if (!/^\d+$/.test(length)) return error("INVALID_CONTENT_LENGTH", 400);
-    if (Number(length) > limit) return error("PAYLOAD_TOO_LARGE", 413);
+    const parsedLength = Number(length);
+    if (!Number.isSafeInteger(parsedLength) || parsedLength < 0) {
+      return error("INVALID_CONTENT_LENGTH", 400);
+    }
+    if (parsedLength > limit) {
+      return error("PAYLOAD_TOO_LARGE", 413);
+    }
   }
   if (!request.body) return error("INVALID_BODY", 400);
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;
   try {
-    for (;;) {
+    for (; ;) {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
       if (size > limit) {
-        void reader.cancel().catch(() => {});
+        void reader.cancel().catch(() => { });
         return error("PAYLOAD_TOO_LARGE", 413);
       }
       chunks.push(value);
@@ -39,6 +40,9 @@ export async function readBytes(request: Request | Response, limit: number) {
     for (const chunk of chunks) {
       bytes.set(chunk, offset);
       offset += chunk.byteLength;
+    }
+    if (length !== null && Number(length) !== bytes.byteLength) {
+      return error("INVALID_CONTENT_LENGTH", 400);
     }
     return bytes;
   } catch {

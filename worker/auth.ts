@@ -33,12 +33,12 @@ export function adminConfig(env: ReviewerAuthEnv) {
 type Config = NonNullable<ReturnType<typeof adminConfig>>;
 
 function matchesToken(candidate: string, expected: string) {
-  if (!tokenPattern.test(candidate)) return false;
-  let mismatch = 0;
-  for (let i = 0; i < candidate.length; i++) {
-    mismatch |= candidate.charCodeAt(i) ^ expected.charCodeAt(i);
+  if (!tokenPattern.test(candidate) || !tokenPattern.test(expected)) return false;
+  let diff = candidate.length ^ expected.length;
+  for (let i = 0; i < expected.length; i++) {
+    diff |= candidate.charCodeAt(i) ^ expected.charCodeAt(i);
   }
-  return mismatch === 0;
+  return diff === 0;
 }
 
 export function fromAdminProxy(request: Request, config: Config) {
@@ -62,20 +62,15 @@ async function tokenHash(token: string, config: Config) {
   return hex(new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode("session:" + token))));
 }
 
-
 async function matchesPassword(candidate: string, expected: string) {
   const encoder = new TextEncoder();
   const subtle = crypto.subtle as SubtleCrypto;
-
-  const submitted = await subtle.digest("SHA-256", encoder.encode(candidate));
-  const configured = await subtle.digest("SHA-256", encoder.encode(expected));
-
-  return subtle.timingSafeEqual(
-    new Uint8Array(submitted),
-    new Uint8Array(configured),
-  );
+  const [submitted, configured] = await Promise.all([
+    subtle.digest("SHA-256", encoder.encode(candidate)),
+    subtle.digest("SHA-256", encoder.encode(expected)),
+  ]);
+  return subtle.timingSafeEqual(new Uint8Array(submitted), new Uint8Array(configured));
 }
-
 
 function csrfToken(token: string) {
   return sha256("csrf:" + token);
@@ -124,13 +119,15 @@ export async function reviewerLogin(request: Request, db: D1Database, config: Co
   const input = await readJson(request, 1024);
   if (input instanceof Response) return input;
   if (!input || typeof input !== "object" || !("password" in input) ||
-    Object.keys(input).length !== 1 || typeof input.password !== "string") {
+    Object.keys(input).length !== 1 || typeof input.password !== "string" ||
+    input.password.length > 256) {
     return error("INVALID_REQUEST", 400);
   }
   if (!await reserveLoginAttempt(request, db, config)) {
     return error("RATE_LIMITED", 429, { "Retry-After": String(loginWindowSeconds) });
   }
-if (!await matchesPassword(input.password, config.password)) {    return error("UNAUTHORIZED", 401);
+  if (!await matchesPassword(input.password, config.password)) {
+    return error("UNAUTHORIZED", 401);
   }
 
   const previous = readSessionCookie(request);

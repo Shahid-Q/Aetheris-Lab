@@ -28,7 +28,11 @@ export default function Requests() {
       {q.isError && (
         <Notice kind="error">
           {t("draftsUnavailable")}
-          <button className="button subtle" onClick={() => void q.refetch()}>
+          <button
+            type="button"
+            className="button subtle"
+            onClick={() => void q.refetch()}
+          >
             {t("retry")}
           </button>
         </Notice>

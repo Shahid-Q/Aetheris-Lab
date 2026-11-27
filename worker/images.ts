@@ -81,7 +81,12 @@ export async function readSubmission(request: Request) {
   const bytes = await readBytes(request, multipartMaxBytes);
   if (bytes instanceof Response) return bytes;
   const length = request.headers.get("Content-Length");
-  if (length !== null && Number(length) !== bytes.byteLength) return error("INVALID_CONTENT_LENGTH", 400);
+  if (length !== null) {
+    const parsedLength = Number(length);
+    if (!Number.isSafeInteger(parsedLength) || parsedLength < 0 || parsedLength !== bytes.byteLength) {
+      return error("INVALID_CONTENT_LENGTH", 400);
+    }
+  }
   let form: FormData;
   try {
     form = await new Response(bytes, { headers: { "Content-Type": contentType } }).formData();
@@ -136,7 +141,6 @@ export async function deleteQueuedImages(db: D1Database, bucket: R2Bucket) {
   try {
     await bucket.delete(keys);
   } catch {
-    // Leave keys queued for the next scheduled invocation.
     return;
   }
   await db.prepare(

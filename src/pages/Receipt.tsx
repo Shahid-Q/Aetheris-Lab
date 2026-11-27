@@ -38,6 +38,14 @@ export default function Receipt() {
   const cooldown = useRetryDelay(tracking.error?.retryAt ?? 0);
   const receipt = tracking.data ?? saved;
   const rejected = tracking.error?.code === "missing";
+  const parsedCreatedAt = receipt ? new Date(receipt.createdAt) : null;
+  const hasValidCreatedAt =
+    parsedCreatedAt !== null && !Number.isNaN(parsedCreatedAt.getTime());
+  const formattedCreatedAt = receipt
+    ? hasValidCreatedAt
+      ? parsedCreatedAt.toLocaleString(document.documentElement.lang || undefined)
+      : receipt.createdAt
+    : "";
 
   function remove() {
     if (!forgetReceipt(id)) {
@@ -74,10 +82,14 @@ export default function Receipt() {
               <div>
                 <span>{t("created")}</span>
                 <strong>
-                  <time dateTime={receipt.createdAt}>
-                    {new Date(receipt.createdAt).toLocaleString(
-                      document.documentElement.lang || undefined,
-                    )}
+                  <time
+                    dateTime={
+                      hasValidCreatedAt && parsedCreatedAt
+                        ? parsedCreatedAt.toISOString()
+                        : undefined
+                    }
+                  >
+                    {formattedCreatedAt}
                   </time>
                 </strong>
               </div>
@@ -112,7 +124,12 @@ export default function Receipt() {
             >
               {t("refreshReceipt")}
             </Button>
-            <Button onClick={() => setConfirmDelete(true)}>
+            <Button
+              onClick={() => {
+                setDeleteError(false);
+                setConfirmDelete(true);
+              }}
+            >
               {t("forgetReceipt")}
             </Button>
           </div>

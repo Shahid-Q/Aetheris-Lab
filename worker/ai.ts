@@ -14,7 +14,7 @@ export function providerFor(config: AIConfig) {
   const key = config.AGENT_API_KEY?.trim();
   const instructions = config.AGENT_SYSTEM_PROMPT?.trim();
   if (config.AI_PROVIDER !== "openai" || !model || !/^[\w.:-]{1,128}$/.test(model)
-    || !key || !instructions) return null;
+    || !key || !instructions || instructions.length > 8000) return null;
 
   return {
     name: "openai",
@@ -30,12 +30,14 @@ export function providerFor(config: AIConfig) {
           model, store: false, max_completion_tokens: 1800, response_format: { type: "json_object" },
           messages: [
             { role: "system", content: instructions },
-            { role: "user", content: JSON.stringify({
-              responseJSONSchema: z.toJSONSchema(assessmentSchema),
-              identities: report.identities, gaps: report.gaps,
-              evidence: evidence.map(({ id, kind, solution, title, excerpt }) =>
-                ({ id, kind, solution, title, excerpt })),
-            }) },
+            {
+              role: "user", content: JSON.stringify({
+                responseJSONSchema: z.toJSONSchema(assessmentSchema),
+                identities: report.identities, gaps: report.gaps,
+                evidence: evidence.map(({ id, kind, solution, title, excerpt }) =>
+                  ({ id, kind, solution, title, excerpt: excerpt.slice(0, 600) })),
+              })
+            },
           ],
         }),
       });
