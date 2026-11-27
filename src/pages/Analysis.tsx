@@ -120,6 +120,8 @@ export default function Analysis() {
   const active = useRef(false);
   const cooldown = useRetryDelay(failure?.retryAt ?? 0);
   const method = new URLSearchParams(location.search).get("method");
+  const hasPhotos = Boolean(imageA || imageB);
+  const effectiveAttachPhotos = attachPhotos && hasPhotos;
 
   useEffect(() => {
     active.current = location.pathname === "/analysis";
@@ -140,14 +142,24 @@ export default function Analysis() {
     [imageB],
   );
 
-  useEffect(() => {
-    if (!imageA && !imageB) setAttachPhotos(false);
-  }, [imageA, imageB]);
-
   const instantResult = useMemo(() => {
     if (!a || !b) return null;
     return evaluatePairInstantly(a, b, conditions, costA, costB);
   }, [a, b, conditions, costA, costB]);
+
+  function handleImageAChange(nextImage: ImageAttachment | null) {
+    setImageA(nextImage);
+    if (!nextImage && !imageB) {
+      setAttachPhotos(false);
+    }
+  }
+
+  function handleImageBChange(nextImage: ImageAttachment | null) {
+    setImageB(nextImage);
+    if (!imageA && !nextImage) {
+      setAttachPhotos(false);
+    }
+  }
 
   function saveDraft() {
     if (!a || !b || inFlight.current || conditions.length > 3000) {
@@ -174,7 +186,9 @@ export default function Analysis() {
     try {
       const id = await submitRequest(
         { a, b, conditions },
-        attachPhotos ? { imageA: imageA?.file, imageB: imageB?.file } : undefined,
+        effectiveAttachPhotos
+          ? { imageA: imageA?.file, imageB: imageB?.file }
+          : undefined,
       );
       if (active.current)
         navigate("/requests/" + id + "/receipt", { replace: true });
@@ -204,7 +218,7 @@ export default function Analysis() {
             value={a}
             onChange={setA}
             image={imageA}
-            onImage={setImageA}
+            onImage={handleImageAChange}
             initialMethod={method ?? undefined} />
           <div className="pair-connector">
             <Icon name="add" />
@@ -214,7 +228,7 @@ export default function Analysis() {
             value={b}
             onChange={setB}
             image={imageB}
-            onImage={setImageB}
+            onImage={handleImageBChange}
           />
         </div>
         <section className="panel context-panel">
@@ -275,12 +289,12 @@ export default function Analysis() {
         <div>
           <h3>{t("submitRequest")}</h3>
           <p>{t("submissionNotice")}</p>
-          {attachPhotos && (imageA || imageB) && <p>{t("photosPrivate")}</p>}
+          {effectiveAttachPhotos && <p>{t("photosPrivate")}</p>}
         </div>
-        {(imageA || imageB) && (
+        {hasPhotos && (
           <FormControlLabel
             label={t("attachReviewPhotos")}
-            control={<Checkbox checked={attachPhotos} disabled={pending} onChange={(_, value) => setAttachPhotos(value)} />}
+            control={<Checkbox checked={effectiveAttachPhotos} disabled={pending} onChange={(_, value) => setAttachPhotos(value)} />}
           />
         )}
         <Button

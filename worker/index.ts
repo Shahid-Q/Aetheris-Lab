@@ -40,7 +40,7 @@ async function health(env: Env) {
       ).all();
       ready = true;
     } catch {
-
+      // Keep ready as false when schema or bindings are unavailable
     }
   }
   const enabled = ready && env.AGENT_ENABLED === "true";
@@ -55,7 +55,7 @@ async function health(env: Env) {
 }
 
 async function withinLimit(request: Request, limiter: RateLimiter) {
-  // Cloudflare provides this header on direct ingress. Treat missing IPs as a shared bucket.
+  // Cloudflare provides this header on direct ingress. Treat missing IPs as a shared bucket
   const key = request.headers.get("CF-Connecting-IP") || "unknown-client";
   const { success } = await limiter.limit({ key });
   return success;
@@ -95,13 +95,13 @@ async function submit(request: Request, env: Env) {
     ]);
   } catch (cause) {
     if (images.length) {
-      // Resolve an ambiguous D1 failure on the primary before deleting any objects.
+      // Resolve an ambiguous D1 failure on the primary before deleting any objects
       try {
         const receipt = await env.DB.withSession("first-primary").prepare("SELECT id FROM public_requests WHERE id = ?")
           .bind(id).first();
         if (!receipt) await Promise.allSettled(images.map(({ objectKey }) => env.IMAGES.delete(objectKey)));
       } catch {
-        // Keep inaccessible objects if the database could not confirm the outcome.
+        // Keep inaccessible objects if the database could not confirm the outcome
       }
     }
     throw cause;

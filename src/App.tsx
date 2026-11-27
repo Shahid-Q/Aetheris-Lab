@@ -86,9 +86,6 @@ export default function App() {
     if (menu && mobile)
       sidebar.current?.querySelector<HTMLAnchorElement>("nav a")?.focus();
   }, [menu, mobile]);
-  useEffect(() => {
-    if (!mobile) setMenu(false);
-  }, [mobile]);
   const location = useLocation();
   const t = (key: TextKey) => (lang === "ar" ? (ar[key] ?? en[key]) : en[key]);
   useEffect(() => {

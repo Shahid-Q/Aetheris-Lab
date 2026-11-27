@@ -1,4 +1,3 @@
-
 import {
   createdReceiptSchema,
   type CreatedReceipt,
@@ -41,11 +40,13 @@ function readStoredReceipt(id: string) {
       return parsed.data;
     }
   } catch {
+    // Malformed JSON is ignored and cleaned up below
   }
 
   try {
     localStorage.removeItem(key);
   } catch {
+    // Storage removal may be blocked by browser privacy settings
   }
 
   return undefined;
