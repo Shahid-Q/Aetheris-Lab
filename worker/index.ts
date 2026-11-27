@@ -39,8 +39,9 @@ async function health(env: Env) {
          LEFT JOIN public_review_decisions v ON v.request_id = r.id LIMIT 0`,
       ).all();
       ready = true;
-    } catch {
-      // Keep ready as false when schema or bindings are unavailable
+    } catch (err) {
+      console.error("Health check failed:", err);
+      ready = false;
     }
   }
   const enabled = ready && env.AGENT_ENABLED === "true";
@@ -100,8 +101,8 @@ async function submit(request: Request, env: Env) {
         const receipt = await env.DB.withSession("first-primary").prepare("SELECT id FROM public_requests WHERE id = ?")
           .bind(id).first();
         if (!receipt) await Promise.allSettled(images.map(({ objectKey }) => env.IMAGES.delete(objectKey)));
-      } catch {
-        // Keep inaccessible objects if the database could not confirm the outcome
+      } catch (lookupErr) {
+        console.error("Failed to verify submission receipt before cleanup:", lookupErr);
       }
     }
     throw cause;
